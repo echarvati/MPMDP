@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH -J %this_is_a_job%
+#SBATCH -o %this_is_a_job%.out
+#SBATCH -e %this_is_a_job%.err
+#SBATCH -p batch
+#SBATCH --time=01:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=4
+#SBATCH --cpus-per-task=12
+
+make_str=%build_system%
+mpmdp=%source%
+tools=%tools_path%
+
+julia $make_str/init_lammps.jl
+julia $mpmdp/start.jl
+

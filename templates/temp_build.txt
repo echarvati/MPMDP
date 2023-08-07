@@ -1,0 +1,8 @@
+%Box_X%
+%Box_Y%
+%Box_Z%
+%Polymer_Chain%
+%N%
+%sigma%
+%Chain_Length%
+

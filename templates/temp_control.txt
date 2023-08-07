@@ -1,0 +1,30 @@
+# Simulation control
+timestep %timestep% #simulation time step [reduced units]
+temperature %temperature% #simulation temperature [reduced units]
+n_steps %simu_steps% # number of steps
+data_file input.data # starting configuration
+
+# Output writting
+traj_period %noutxyz% # number of steps that elapse between writing coordinates to output trajectory file
+log_period %noutdat% # number of steps that elapse between logging data to the output
+traj_file %tjr_name% # file name (.xyz format)
+log_file %log_name% # file name
+init_velocity Z # direction of intial velocity
+
+#Bonded interactions 
+bonded_interactions Harmonic_Bonds 2 1 Harmonic_Angles 3 2 1  #Harmonic bond-lengths and bond angles
+
+
+# Intermolecular interactions
+non_bonded_interactions %interaction_type% %interaction_paras%
+
+# T controls
+thermostat %thermostat% 1 #choice of thermostat and thermostat control
+
+# Special features
+collisions MPCD %cell_size% %collision_freq% %collision_ang% #cell_size collision_freq collision_ang
+slip_springs %MDsteps% %MCsteps% %k% %r0% %restart% #MDstep MCstep k r0 restart[y/n]
+
+# Viscosity controls
+#shear highest only 1 20 15
+#shear_sample_freq 100
