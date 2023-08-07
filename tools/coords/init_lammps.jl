@@ -44,13 +44,10 @@ function correct_distance_pbc(box, d)
     return d
 end
 
-#mutable struct system
-#    box::Vector{Float64}
-#end
+#Read system parameters from .txt file
+f = open("structure_paras.txt")
+f = readlines(f);
 
-#function sys_init()
-#    box = [0.0, 0.0, 0.0]
-#end
 
 iter_limit = 10000
 
@@ -60,25 +57,15 @@ check = false
 
 box = [0.0, 0.0, 0.0]
 
-println("Enter the box size in x-direction.")
-box[1] = parse(Float64, chomp(readline()))
-println("Enter the box size in y-direction.")
-box[2] = parse(Float64, chomp(readline()))
-println("Enter the box size in z-direction.")
-box[3] = parse(Float64, chomp(readline()))
-#box[1] = 10
-#box[2] = 10
-#box[3] = 10
+box[1] = parse(Float64, f[1])
+box[2] = parse(Float64, f[2])
+box[3] = parse(Float64, f[3])
 
 V = box[1] * box[2] * box[3]
 
-#println("$box[1] $box[2] $box[2]")
-
 chains = ""
 
-println("Polymer chain? (y/n)")
-chains = chomp(readline())
-#chains = "y"
+chains = f[4]
 if chains != "y" && chains != "n"
     println("Only y and n!")
     exit()
@@ -87,13 +74,9 @@ end
 # NO MOLECULES.
 if chains == "n"
     n_spec = 1
-    #println("Enter number of different species.")
-    #n_spec = chomp(readline())
-    println("Enter total number of particles.")
-    n_particles = parse(Int64, chomp(readline()))
+    n_particles = parse(Int, f[5])
 
-    println("Enter tolerance distance σ.")
-    σ = parse(Float64, chomp(readline()))
+    σ = parse(Float64, f[6])
 
     #ρ = n_particle_vec / V
     spec = 1
@@ -109,14 +92,14 @@ if chains == "n"
     @showprogress for i in 1:n_particles
         global check = false
         if i == 1 # Place first particle randomly within the box.
-            global coords = rand(Float64, 3) .* box .- box / 2 
+            global coords = rand(Float64, 3) .* box .- box / 2
             particle_i = Particle(i, spec, mass, charge, coords, image)
             particle_vec[i] = particle_i
         else
             while check == false # Create random coordinates until r > σ for all previously created particles.
                 global check = true
-                global coords = rand(Float64, 3) .* box .- box / 2 
-                for j in 1:(i - 1) 
+                global coords = rand(Float64, 3) .* box .- box / 2
+                for j in 1:(i - 1)
                     d = particle_vec[j].pos .- coords
                     d = correct_distance_pbc(box, d)
                     r = norm(d)
@@ -138,7 +121,8 @@ if chains == "n"
 
     # Write output.
     open("input.data", "w") do file
-        write(file, "LAMMPS data file generated via init_lammps.jl. Written by Simon Alberti.\n \n")
+        print(pwd())
+		write(file, "LAMMPS data file generated via init_lammps.jl. Written by Simon Alberti.\n \n")
         write(file, "$n_particles atoms\n")
         write(file, "$n_spec atom types\n")
         write(file, "\n")
@@ -161,12 +145,10 @@ if chains == "n"
 
 # Polymer chains.
 elseif chains == "y"
-    println("Enter total number of particles.")
-    n_particles = parse(Int64, chomp(readline()))
-    #n_particles = 100
-    println("Enter chain length.")
-    l_chain = parse(Int64, chomp(readline()))
-    #l_chain = 20
+    n_particles = parse(Int, f[5])
+	print(n_particles)
+    l_chain = parse(Int, f[7])
+	print(l_chain)
     n_mol = n_particles / l_chain
     n_mol = Int(n_mol)
     if isinteger(n_mol) == false
@@ -177,9 +159,8 @@ elseif chains == "y"
     n_bonds = Int(n_bonds)
     n_angles = (l_chain - 2) * n_mol
     n_angles = Int(n_angles)
-    println("Enter tolerance distance σ.")
-    σ = parse(Float64, chomp(readline()))
-   #σ = 1
+    σ = parse(Float64, f[6])
+
     l_bond = 1
     spec = 1
     mass = 1
@@ -188,8 +169,6 @@ elseif chains == "y"
     image = [0, 0, 0]
 
     particle_vec = Vector{Particle}(undef, n_particles)
-    #bond_vec = Vector{Bond}(undef, n_bonds)
-    #angle_vec = Vector{Angle}(undef, n_angles)
 
     for i in 1:n_mol
         for j in 1:l_chain
@@ -197,14 +176,14 @@ elseif chains == "y"
             global i_counter += 1
             global image = [0, 0, 0]
             if i_counter == 1 # Place first particle randomly.
-                global coords = rand(Float64, 3) .* box .- box / 2 
+                global coords = rand(Float64, 3) .* box .- box / 2
                 particle_i = Particle(i, spec, mass, charge, coords, image)
                 particle_vec[i_counter] = particle_i
             elseif j == 1 && i_counter != 1 # At new chain, check tolerance distance from all other particles.
                 while check == false
                     global check = true
                     global coords = rand(Float64, 3) .* box .- box / 2
-                    for k in 1:(i_counter - 1) 
+                    for k in 1:(i_counter - 1)
                         d = particle_vec[k].pos .- coords
                         d = correct_distance_pbc(box, d)
                         r = norm(d)
@@ -232,7 +211,7 @@ elseif chains == "y"
                     coords[1] -= box[1] * image[1]
                     coords[2] -= box[2] * image[2]
                     coords[3] -= box[3] * image[3]
-                    for k in 1:(i_counter - 1) 
+                    for k in 1:(i_counter - 1)
                         d = particle_vec[k].pos .- coords
                         d = correct_distance_pbc(box, d)
                         r = norm(d)
@@ -252,7 +231,7 @@ elseif chains == "y"
             end
         end
     end
-    
+
     # Write output.
     open("input.data", "w") do file
         write(file, "LAMMPS data file generated via init_lammps.jl. Written by Simon Alberti.\n \n")
